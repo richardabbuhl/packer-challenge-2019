@@ -25,8 +25,6 @@ public class Packer {
 
     private static final int  MAX_TOTAL_WEIGHT = 100; // Max value for the total
 
-    private static final char EURO = (char)65533; // Euro sign character
-
     private final ChooserStrategy chooser = new RandomStrategy(); // Strategy for choosing the packages.
 
     /**
@@ -69,15 +67,17 @@ public class Packer {
             String[] tokens = packString.split(",");
             int index = Integer.parseInt(tokens[0]);
             double weight = Double.parseDouble(tokens[1]);
-            char currency = tokens[2].charAt(0);
-            if (EURO == tokens[2].charAt(0)) {
-                int cost = Integer.parseInt(tokens[2].substring(1));
-                PackageInfo packageRequest = new PackageInfo(index, weight, cost);
-                packages.add(packageRequest);
+            int cost;
+            // Work-around for Intellij vs Maven.
+            if (StringUtils.isNumeric(tokens[2].substring(1))) {
+                // In Intellij unit tests the Euro sign is one character.
+                cost = Integer.parseInt(tokens[2].substring(1));
             } else {
-                log.error("invalid currency {}", currency);
-                throw new APIException("invalid currency " + currency);
+                // In Maven the Euro sign is three characters.
+                cost = Integer.parseInt(tokens[2].substring(3));
             }
+            PackageInfo packageRequest = new PackageInfo(index, weight, cost);
+            packages.add(packageRequest);
         }
         return packages.toArray(new PackageInfo[0]);
     }
